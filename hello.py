@@ -7,12 +7,14 @@ from wtforms.validators import Required
 from flask.ext.sqlalchemy import SQLAlchemy
 import os
 from flask.ext.script import Shell
+from flask.ext.migrate import Migrate, MigrateCommand
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 bootstrap = Bootstrap(app)
 manager = Manager(app)
+
 app.config['SECRET_KEY'] = 'hard to guess string'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
 
@@ -49,6 +51,8 @@ def make_shell_context():
     return dict(app=app, db=db, User=User, Role=Role)
 
 manager.add_command("shell", Shell(make_context=make_shell_context))
+manager.add_command("db", MigrateCommand)
+migrate = Migrate(app, db)
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
