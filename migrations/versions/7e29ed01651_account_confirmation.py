@@ -1,4 +1,4 @@
-"""empty message
+"""account confirmation
 
 Revision ID: 7e29ed01651
 Revises: 27b3d7f0f240
