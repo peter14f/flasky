@@ -1,5 +1,5 @@
 from flask.ext.wtf import Form
-from wtforms import StringField, PasswordField, BooleanField, SubmitField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, ValidationError
 from wtforms.validators import Required, Email, Length, EqualTo, Regexp
 from ..models import User
 
@@ -33,3 +33,12 @@ class RegistrationForm(Form):
     def validate_username(self, field):
         if User.query.filter_by(username=field.data).first():
             raise ValidationError('Username already in use.')
+
+class ChangePasswordForm(Form):
+    old_password = PasswordField('Old Password',
+                                 validators=[Required()])
+    new_password = PasswordField('New Password',
+                                 validators=[Required(), EqualTo('new_password2', message='Passwords must match.')])
+    new_password2 = PasswordField('Confirm New Password', 
+                                  validators=[Required()])
+    submit = SubmitField('Change Password')
