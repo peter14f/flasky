@@ -3,7 +3,7 @@ from flask.ext.login import login_user, login_required, logout_user, current_use
 from . import auth
 from .. import db
 from ..models import User
-from .forms import LoginForm, RegistrationForm, ChangePasswordForm
+from .forms import LoginForm, RegistrationForm, ChangePasswordForm, ForgotPasswordForm, ResetPasswordForm
 from ..email import send_mail
 
 @auth.route('/login', methods=['GET', 'POST'])
@@ -85,3 +85,36 @@ def change_password():
         return redirect(url_for('auth.login'))
     return render_template('auth/change_password.html', form=form)
 
+@auth.route('/reset', methods=['GET', 'POST'])
+def password_reset_request():
+    if not current_user.is_anonymous():
+        return render_template('main.index')
+    form = ForgotPasswordForm()
+    if form.validate_on_submit():
+        u = User.query.filter_by(email=form.email.data).first()
+        if u is not None:
+            token = u.generate_confirmation_token()
+            send_mail(u.email, 'Reset Your Email',
+                      'auth/email/reset_password', user=u, email=u.email, token=token)
+            flash("A link to reset your password has been sent to you by email.")
+            return redirect(url_for('main.index'))
+        else:
+            flash("No username was registered with this email")
+            return render_template('auth/reset_password.html', form=form)
+    return render_template('auth/reset_password.html', form=form)
+
+@auth.route('/reset/<email>/<token>', methods=['GET', 'POST'])
+def password_reset(email, token):
+    if not current_user.is_anonymous():
+        return render_template('main.index')
+    form = ResetPasswordForm()
+    print email
+    print token
+    if form.validate_on_submit():
+        u = User.query.filter_by(email=email).first()
+        if u is not None and u.confirm(token):
+            u.password = form.password.data
+            flash('Password for username ' + "'" + 
+                  u.username + "'" + " has been reset.")
+            return redirect(url_for('main.index'))
+    return render_template('auth/reset_password.html', form=form)
