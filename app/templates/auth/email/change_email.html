@@ -1,0 +1,9 @@
+<p>
+Dear {{ current_user.username }},
+
+It appears that you have made a request to change the email Flasky!
+
+To confirm your account please click on the following link:
+
+<a href={{ url_for('auth.change_email', token=token, _external=True) }}>Confirmation Link</a>
+</p>

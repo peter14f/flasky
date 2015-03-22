@@ -48,9 +48,18 @@ class ForgotPasswordForm(Form):
                       validators=[Required(), Length(1, 64), Email()])
   submit = SubmitField('Done')
 
-class ResetPasswordForm(Form):
+class PasswordResetForm(Form):
+  email = StringField('Email',
+                      validators=[Required(),
+                                  Length(1, 64), 
+                                  Email()])
   password = PasswordField('Password',
                            validators=[Required(), EqualTo('password2', message='Passwordsmust must match.')])
   password2 = PasswordField('Confirm Password',
                             validators=[Required()])
   submit = SubmitField('Done')
+
+class ChangeEmailRequestForm(Form):
+  newemail = StringField('New Email', validators=[Required(), Length(1, 64), Email()])
+  password = PasswordField('Password', validators=[Required()])
+  submit = SubmitField('Submit')
