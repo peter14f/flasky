@@ -5,6 +5,9 @@ from threading import Thread
 from .forms import NameForm
 from .. import db, mail
 from ..email import send_mail
+from ..models import Permission
+from ..decorators import permission_required, admin_required
+from flask.ext.login import login_required
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
@@ -26,3 +29,9 @@ def index():
                            form=form,
                            name=session.get('name'),
                            known=session.get('known', False))
+
+@main.route("/moderators")
+@login_required
+@permission_required(Permission.MODERATE_COMMENTS)
+def for_moderators_only():
+    return "For comment moderators!"

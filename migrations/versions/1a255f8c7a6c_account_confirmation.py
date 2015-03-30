@@ -1,13 +1,13 @@
 """account confirmation
 
-Revision ID: 7e29ed01651
+Revision ID: 1a255f8c7a6c 
 Revises: 27b3d7f0f240
 Create Date: 2015-03-12 23:04:55.379330
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '7e29ed01651'
+revision = '1a255f8c7a6c'
 down_revision = '27b3d7f0f240'
 
 from alembic import op
