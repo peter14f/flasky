@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask.ext.login import UserMixin, AnonymousUserMixin
 from flask import current_app
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from datetime import datetime
 
 class Role(db.Model):
     __tablename__ = 'roles'
@@ -45,7 +46,12 @@ class User(UserMixin, db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     password_hash = db.Column(db.String(128))
     confirmed = db.Column(db.Boolean, default=False)
-    
+    name = db.Column(db.String(64))
+    location = db.Column(db.String(64))
+    about_me = db.Column(db.Text())
+    member_since = db.Column(db.DateTime(), default=datetime.utcnow)
+    last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
+
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
         if self.role is None:
@@ -53,12 +59,6 @@ class User(UserMixin, db.Model):
                 self.role = Role.query.filter_by(permissions=0xff).first()
             if self.role is None:
                 self.role = Role.query.filter_by(default=True).first()
-
-    def can(self, permissions):
-        return self.role is not None and (self.role.permissions & permissions) == permissions
-
-    def is_administrator(self):
-        return self.can(Permission.ADMINISTER)
 
     @property
     def password(self):
@@ -69,7 +69,13 @@ class User(UserMixin, db.Model):
     
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
-
+    
+    def can(self, permissions):
+        return self.role is not None and (self.role.permissions & permissions) == permissions
+    
+    def is_administrator(self):
+        return self.can(Permission.ADMINISTER)
+    
     def __repr__(self):
         return '<User %r>' % self.username
 
@@ -136,6 +142,10 @@ class User(UserMixin, db.Model):
         self.email = new_email
         db.session.add(self)
         return True
+    
+    def ping(self):
+        self.last_seen = datetime.utcnow()
+        db.session.add(self)
 
 class Permission:
     FOLLOW = 0x01

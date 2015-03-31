@@ -30,6 +30,13 @@ def index():
                            name=session.get('name'),
                            known=session.get('known', False))
 
+@main.route('/user/<username>')
+def user(username):
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        abort(404)
+    return render_template('user.html', user=user)
+
 @main.route("/moderators")
 @login_required
 @permission_required(Permission.MODERATE_COMMENTS)
