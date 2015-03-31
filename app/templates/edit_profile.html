@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Flasky - Edit Profile{% endblock %}
+
+{% block page_content %}
+<div class-"page-header">
+    {% if current_user.is_administrator() %}
+    <h1>Edit <b>{{ user.username }}</b>'s Profile</h1>
+    {% else %}
+    <h1>Edit Your Profile</h1>
+    {% endif %}
+</div>
+<div class="col-md-4">
+    {{ wtf.quick_form(form) }}
+</div>
+{% endblock %}
