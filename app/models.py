@@ -2,9 +2,10 @@ from . import db
 from . import login_manager
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask.ext.login import UserMixin, AnonymousUserMixin
-from flask import current_app
+from flask import current_app, request
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from datetime import datetime
+import hashlib
 
 class Role(db.Model):
     __tablename__ = 'roles'
@@ -146,6 +147,15 @@ class User(UserMixin, db.Model):
     def ping(self):
         self.last_seen = datetime.utcnow()
         db.session.add(self)
+
+    def gravatar(self, size=100, default='identicon', rating='g'):
+        if request.is_secure:
+            url = 'https://secure.gravatar.com/avatar'
+        else:
+            url = 'http://www.gravatar.com/avatar'
+        hash = hashlib.md5(self.email.encode('utf-8')).hexdigest()
+        return '{url}/{hash}?s={size}&d={default}&r={rating}'.format(
+            url=url, hash=hash, size=size, default=default, rating=rating)
 
 class Permission:
     FOLLOW = 0x01
