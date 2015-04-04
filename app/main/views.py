@@ -1,16 +1,16 @@
 from . import main
-from ..models import User
+from ..models import User, Post
 from flask import render_template, session, redirect, url_for, current_app, flash, abort
 from threading import Thread
-from .forms import NameForm, EditProfileForm, EditProfileAdminForm
+from .forms import NameForm, EditProfileForm, EditProfileAdminForm, PostForm
 from .. import db, mail
 from ..email import send_mail
 from ..models import Permission
 from ..decorators import permission_required, admin_required
 from flask.ext.login import login_required, current_user
 
-@main.route('/', methods=['GET', 'POST'])
-def index():
+@main.route('/old_index', methods=['GET', 'POST'])
+def old_index():
     form = NameForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.name.data).first()
@@ -25,7 +25,7 @@ def index():
             session['known'] = True
         session['name'] = form.name.data
         return redirect(url_for('.index'))
-    return render_template('index.html',
+    return render_template('old_index.html',
                            form=form,
                            name=session.get('name'),
                            known=session.get('known', False))
@@ -91,3 +91,16 @@ def edit_profile_admin(id):
     form.location.data = user.location
     form.about_me.data = user.about_me 
     return render_template('edit_profile.html', form=form, user=user)
+
+@main.route('/', methods=['GET', 'POST'])
+def index():
+    form = PostForm()
+    if form.validate_on_submit() and \
+            current_user.can(Permission.WRITE_ARTICLES):
+        new_post = Post()
+        new_post.body = form.body.data
+        new_post.author = current_user._get_current_object()
+        db.session.add(new_post)
+        return redirect(url_for("main.index"))
+    posts = Post.query.order_by(Post.timestamp.desc()).all()
+    return render_template('index.html', form=form, posts=posts)

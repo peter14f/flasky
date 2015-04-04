@@ -1,6 +1,5 @@
 from flask.ext.login import LoginManager
 from flask.ext.bootstrap import Bootstrap
-from flask.ext.script import Manager
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.mail import Mail
 from flask.ext.moment import Moment
@@ -8,7 +7,6 @@ from config import config
 from flask import Flask
 
 bootstrap = Bootstrap()
-manager = Manager()
 db = SQLAlchemy()
 mail = Mail()
 login_manager = LoginManager()
