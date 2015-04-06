@@ -1,6 +1,6 @@
 from . import main
 from ..models import User, Post
-from flask import render_template, session, redirect, url_for, current_app, flash, abort
+from flask import render_template, session, redirect, url_for, current_app, flash, abort, request
 from threading import Thread
 from .forms import NameForm, EditProfileForm, EditProfileAdminForm, PostForm
 from .. import db, mail
@@ -103,5 +103,9 @@ def index():
         new_post.author = current_user._get_current_object()
         db.session.add(new_post)
         return redirect(url_for("main.index"))
-    posts = Post.query.order_by(Post.timestamp.desc()).all()
-    return render_template('index.html', form=form, posts=posts)
+    page = request.args.get('page', 1, type=int)
+    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
+        page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+        error_out=False)
+    posts = pagination.items
+    return render_template('index.html', form=form, posts=posts, pagination=pagination)
