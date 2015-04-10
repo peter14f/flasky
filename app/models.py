@@ -16,11 +16,11 @@ class Role(db.Model):
     default = db.Column(db.Boolean, default=False, index=True)
     permissions = db.Column(db.Integer)
     users = db.relationship('User', backref='role', lazy='dynamic')
-    
+
     @staticmethod
     def insert_roles():
         roles = {
-            'User':(Permission.FOLLOW | 
+            'User':(Permission.FOLLOW |
                     Permission.COMMENT |
                     Permission.WRITE_ARTICLES, True),
             'Moderator':(Permission.FOLLOW |
@@ -41,6 +41,12 @@ class Role(db.Model):
     def __repr__(self):
         return '<Role %r>' % self.name
 
+class Follow(db.Model):
+    __tablename__ = 'follows'
+    follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    followed_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -56,6 +62,18 @@ class User(UserMixin, db.Model):
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
     avatar_hash = db.Column(db.String(32))
     posts = db.relationship('Post', backref='author', lazy='dynamic')
+    # users being followed by me
+    followed = db.relationship('Follow',
+                               foreign_keys=[Follow.follower_id],
+                               backref=db.backref('follower', lazy='joined'),
+                               lazy='dynamic',
+                               cascade='all, delete-orphan')
+    # i am followed by...
+    followers = db.relationship('Follow',
+                                foreign_keys=[Follow.followed_id],
+                                backref=db.backref('followed', lazy='joined'),
+                                lazy='dynamic',
+                                cascade='all, delete-orphan')
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -73,7 +91,23 @@ class User(UserMixin, db.Model):
     @password.setter
     def password(self, password):
         self.password_hash = generate_password_hash(password)
-    
+
+    def follow(self, user):
+        if not self.is_following(user):
+            f = Follow(follower_id=self.id, followed_id=user.id)
+            db.session.add(f)
+
+    def unfollow(self, user):
+        f = self.followed.filter_by(followed_id=user.id).first()
+        if f:
+            db.session.delete(f)
+
+    def is_following(self, user):
+        return self.followed.filter_by(followed_id=user.id).first() is not None
+
+    def is_followed_by(self, user):
+        return self.followers.filter_by(follower_id=user.id).first() is not None
+
     @staticmethod
     def generate_fake(count=100):
         from sqlalchemy.exc import IntegrityError
@@ -98,13 +132,13 @@ class User(UserMixin, db.Model):
 
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
-    
+
     def can(self, permissions):
         return self.role is not None and (self.role.permissions & permissions) == permissions
-    
+
     def is_administrator(self):
         return self.can(Permission.ADMINISTER)
-    
+
     def __repr__(self):
         return '<User %r>' % self.username
 
@@ -112,7 +146,7 @@ class User(UserMixin, db.Model):
     def generate_confirmation_token(self, expiration=3600):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
         return s.dumps({'confirm': self.id})
-    
+
     """ given the token, mark the User as confirmed
         returns True  if deserialization succeeds
                 False                    fails
@@ -172,7 +206,7 @@ class User(UserMixin, db.Model):
         self.avatar_hash = hashlib.md5(self.email.encode('utf-8')).hexdigest()
         db.session.add(self)
         return True
-    
+
     def ping(self):
         self.last_seen = datetime.utcnow()
         db.session.add(self)
@@ -217,7 +251,7 @@ class Post(db.Model):
         target.body_html = bleach.linkify(bleach.clean(
             markdown(value, output_format='html'),
             tags=allowed_tags, strip=True))
-        
+
 db.event.listen(Post.body, 'set', Post.on_changed_body)
 
 class Permission:
