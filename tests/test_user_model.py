@@ -1,6 +1,6 @@
 import unittest
 from app import create_app, db
-from app.models import User, Role, Permission, AnonymousUser, Follow
+from app.models import User, Role, Permission, AnonymousUser, Follow, Post
 import time
 from datetime import datetime
 
@@ -186,3 +186,27 @@ class UserModelTestCase(unittest.TestCase):
         db.session.delete(u2)
         db.session.commit()
         self.assertTrue(Follow.query.count() == 0)
+
+    def test_followed_posts(self):
+        user_john = User(email='john@example.com', password='123')
+        user_susan = User(email='susan@example.com', password='123')
+        user_david = User(email='david@example.com', password='123')
+        db.session.add(user_john)
+        db.session.add(user_susan)
+        db.session.add(user_david)
+        db.session.commit()
+        post_susan = Post(author_id=user_susan.id, body='Blog post by susan')
+        post_john1 = Post(author_id=user_john.id, body='Blog post by john')
+        post_john2 = Post(author_id=user_john.id, body='Blog post by david')
+        post_david = Post(author_id=user_david.id, body='Second blog post by john')
+        db.session.add(post_john1)
+        db.session.add(post_john2)
+        db.session.add(post_susan)
+        db.session.add(post_david)
+        db.session.commit()
+        user_john.follow(user_david)
+        user_susan.follow(user_john)
+        user_susan.follow(user_david)
+        susan_followed_posts_list = user_susan.followed_posts.all()
+        self.assertTrue(len(susan_followed_posts_list) == 3)
+

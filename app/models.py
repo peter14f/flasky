@@ -92,6 +92,11 @@ class User(UserMixin, db.Model):
     def password(self, password):
         self.password_hash = generate_password_hash(password)
 
+    @property
+    def followed_posts(self):
+        return Post.query.join(Follow, Follow.followed_id == Post.author_id).filter(
+            Follow.follower_id == self.id)
+
     def follow(self, user):
         if not self.is_following(user):
             f = Follow(follower_id=self.id, followed_id=user.id)
