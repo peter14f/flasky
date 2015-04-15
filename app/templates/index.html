@@ -20,8 +20,22 @@
     {{ wtf.quick_form(form) }}
     {% endif %}
 </div>
+
+<div class="post-tabs">
+    <ul class="nav nav-tabs">
+        <li{% if not showfollowed %} class="active"{% endif %}><a href="{{ url_for('.show_all') }}">All</a></li>
+        {% if current_user.is_authenticated() %}
+        <li{% if showfollowed %} class="active"{% endif %}><a href="{{ url_for('.show_followed') }}">Followers</a>
+        {% endif %}
+        </li>
+    </ul>
+</div>
+
+{% if pagination %}
 {% include('_posts.html') %}
 <div class="pagination">
     {{ macros.pagination_widget(pagination, ".index") }}
 </div>
+{% endif %}
+
 {% endblock %}
