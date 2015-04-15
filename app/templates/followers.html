@@ -18,6 +18,7 @@ Flasky - {{ title }} {{user.username}}
     </thead>
     {% for follow in follows %}
     <tr>
+        {% if follow.user != current_user %}
         <td>
             <a href="{{ url_for('.user', username = follow.user.username) }}">
                 <img class="img-rounded" src="{{ follow.user.gravatar(size=32) }}">
@@ -27,6 +28,7 @@ Flasky - {{ title }} {{user.username}}
         <td>
             {{ moment(follow.timestamp).format('L') }}
         </td>
+        {% endif %}
     </tr>
         
         
