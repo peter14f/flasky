@@ -280,6 +280,33 @@ class Comment(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
 
+    """ pick a random post from each user and pick one of the
+        user's post to gerenate fake comments. A default of 100
+        comments will be generated for each post chosen
+    """
+    @staticmethod
+    def generate_fake(count=100):
+        from random import seed, randint
+        import forgery_py
+
+        seed()
+        user_count = User.query.count()
+        post_count = Post.query.count()
+        users = User.query.all()
+        for user in users:
+            posts = user.posts
+            if posts.count() > 0:
+                post = posts.offset(randint(0, posts.count() - 1)).first()
+                author = users[randint(0, len(users) - 1)]
+                comment = Comment(
+                            body=forgery_py.forgery.lorem_ipsum.sentences(randint(1,3)),
+                            timestamp=forgery_py.forgery.date.date(True),
+                            author=author,
+                            disabled=False,
+                            post=post)
+                db.session.add(comment)
+                db.session.commit()
+
     def on_changed_body(target, value, oldvalue, initiator):
         allowed_tags = ['a', 'abbr', 'acronym', 'b', 'code', 'em', 'i', 'strong']
         target.body_html = bleach.linkify(
