@@ -242,3 +242,50 @@ def show_followed():
     response = make_response(redirect(url_for('.index')))
     response.set_cookie('show_followed', "1", max_age=30*24*60*60)
     return response
+
+@main.route('/moderate')
+@login_required
+@permission_required(Permission.MODERATE_COMMENTS)
+def moderate():
+    page = request.args.get('page', 1, type=int)
+    pagination = Comment.query.order_by(Comment.timestamp.desc()).paginate(
+        page, per_page=current_app.config['FLASKY_COMMENTS_PER_PAGE'],
+        error_out=False)
+    comments = pagination.items
+    return render_template('moderate.html', 
+                           comments=comments,
+                           pagination=pagination,
+                           page=page)
+
+@main.route('/moderate_enable/<int:id>')
+@login_required
+@permission_required(Permission.MODERATE_COMMENTS)
+def moderate_enable(id):
+    page = request.args.get('page', 1, type=int)
+    comment = Comment.query.get_or_404(id)
+    if comment:
+        if comment.disabled:
+            comment.disabled = False
+            flash('Comment has beeb enabled.')
+        else:
+            flash('Comment does not need to be enabled.')
+    else:
+        flash('Invalid comment.')
+    return redirect(url_for('.moderate', page=page))
+
+@main.route('/moderate_disable/<int:id>')
+@login_required
+@permission_required(Permission.MODERATE_COMMENTS)
+def moderate_disable(id):
+    page = request.args.get('page', 1, type=int)
+    comment = Comment.query.get_or_404(id)
+    if comment is None:
+        flash('Invalid comment.')
+    else:
+        if comment.disabled:
+            flash('Comment does not need to be disabled.')
+        else:
+            comment.disabled = True
+            flash('Comment has been disabled.')
+            db.session.add(comment)
+    return redirect(url_for('.moderate', page=page))
