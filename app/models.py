@@ -191,7 +191,7 @@ class User(UserMixin, db.Model):
         db.session.add(self)
         return True
 
-    def generate_email_change_token(self, new_email, expiration=3600,):
+    def generate_email_change_token(self, new_email, expiration=3600):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
         return s.dumps({'change_email': self.id,
                         'new_email': new_email})
@@ -214,7 +214,7 @@ class User(UserMixin, db.Model):
         db.session.add(self)
         return True
 
-    def generate_auth_token(self, expiration):
+    def generate_auth_token(self, expiration=3600):
         s = Serializer(current_app.config['SECRET_KEY'],
                        expires_in=expiration)
         return s.dumps({'id': self.id})

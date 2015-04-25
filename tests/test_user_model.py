@@ -210,3 +210,18 @@ class UserModelTestCase(unittest.TestCase):
         susan_followed_posts_list = user_susan.followed_posts.all()
         self.assertTrue(len(susan_followed_posts_list) == 4)
 
+    def test_valid_auth_token(self):
+        u = User(email='john@example.com', password='cat')
+        db.session.add(u)
+        db.session.commit()
+        token = u.generate_auth_token()
+        u2 = User.verify_auth_token(token)
+        self.assertTrue(u == u2)
+
+    def test_invalid_auth_token(self):
+        u = User(email='john@example.com', password='cat')
+        db.session.add(u)
+        db.session.commit()
+        token = u.generate_auth_token()
+        u2 = User.verify_auth_token(token + '1')
+        self.assertTrue(u != u2)
