@@ -10,7 +10,7 @@ class Config(object):
     FLASKY_MAIL_SENDER = 'Flasky Admin <flasky@example.com>'
     FLASKY_POSTS_PER_PAGE = 15
     FLASKY_FOLLOWERS_PER_PAGE = 25
-    FLASKY_COMMENTS_PER_PAGE = 10
+    FLASKY_COMMENTS_PER_PAGE = 15
 
     @staticmethod
     def init_app(app):

@@ -2,7 +2,7 @@ from . import db
 from . import login_manager
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask.ext.login import UserMixin, AnonymousUserMixin
-from flask import current_app, request
+from flask import current_app, request, url_for
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from datetime import datetime
 import hashlib
@@ -214,6 +214,21 @@ class User(UserMixin, db.Model):
         db.session.add(self)
         return True
 
+    def generate_auth_token(self, expiration):
+        s = Serializer(current_app.config['SECRET_KEY'],
+                       expires_in=expiration)
+        return s.dumps({'id': self.id})
+
+    # static method as the user will be known only after the token is decoded
+    @staticmethod
+    def verify_auth_token(token):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except:
+            return None
+        return User.query.get(data['id'])
+
     def ping(self):
         self.last_seen = datetime.utcnow()
         db.session.add(self)
@@ -234,6 +249,26 @@ class User(UserMixin, db.Model):
                 user.follow(user)
                 db.session.add(user)
                 db.session.commit()
+
+    def to_json(self):
+        json_user = {
+            'url': url_for('api.get_post',
+                           id=self.id,
+                           _external=True),
+            'username': self.username,
+            'member_since': self.member_since,
+            'last_seen': self.last_seen,
+            'posts': url_for('api.get_user_posts',
+                             id=self.id,
+                             _external=True),
+            'followed_posts': url_for('api.get_user_followed_posts',
+                                      id=self.id,
+                                      _external=True),
+            'post_count': self.posts.count()
+        }
+        return json_user
+
+from app.exceptions import ValidationError
 
 class Post(db.Model):
     __tablename__ = 'posts'
@@ -268,13 +303,44 @@ class Post(db.Model):
             markdown(value, output_format='html'),
             tags=allowed_tags, strip=True))
 
+    @staticmethod
+    def update_body_html():
+        all_posts = Post.query.all()
+        for post in all_posts:
+            post.body = post.body
+            db.session.add(post)
+        db.session.commit()
+
+    def to_json(self):
+        json_post = {
+            'url': url_for('api.get_post', id=self.id, _external=True),
+            'body': self.body,
+            'body_html': self.body_html,
+            'timestamp': self.timestamp,
+            'author': url_for('api.get_user', 
+                              id=self.author_id,
+                              _external=True),
+            'comments': url_for('api.get_post_comments',
+                                id=self.id,
+                                _external=True),
+            'comment_count': self.comments.count()
+        }
+        return json_post
+
+    @staticmethod
+    def from_json(json_post):
+        body = json_post.get('body')
+        if body is None or body == '':
+            raise ValidationError('post does not have a body')
+        return Post(body=body)
+
 db.event.listen(Post.body, 'set', Post.on_changed_body)
 
 class Comment(db.Model):
     __tablename__ = 'comments'
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.Text)
-    bobdy_html = db.Column(db.Text)
+    body_html = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     disabled = db.Column(db.Boolean)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
@@ -284,6 +350,14 @@ class Comment(db.Model):
         user's post to gerenate fake comments. A default of 100
         comments will be generated for each post chosen
     """
+    @staticmethod
+    def update_body_html():
+        comments = Comment.query.all()
+        for comment in comments:
+            comment.body = comment.body
+            db.session.add(comment)
+        db.session.commit()
+
     @staticmethod
     def generate_fake(count=100):
         from random import seed, randint
@@ -314,6 +388,16 @@ class Comment(db.Model):
                 markdown(value, output_format='html'),
                 tags=allowed_tags,
                 strip=True))
+
+    def to_json(self):
+        return {'body': self.body,
+                'body_html': self.body_html,
+                'timestamp': self.timestamp,
+                'author' : url_for('api.get_user', 
+                                   id=self.author_id, 
+                                   _external=True),
+
+                }
 
 db.event.listen(Comment.body, 'set', Comment.on_changed_body)
 

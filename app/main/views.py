@@ -263,14 +263,11 @@ def moderate():
 def moderate_enable(id):
     page = request.args.get('page', 1, type=int)
     comment = Comment.query.get_or_404(id)
-    if comment:
-        if comment.disabled:
-            comment.disabled = False
-            flash('Comment has beeb enabled.')
-        else:
-            flash('Comment does not need to be enabled.')
+    if comment.disabled:
+        comment.disabled = False
+        flash('Comment has beeb enabled.')
     else:
-        flash('Invalid comment.')
+        flash('Comment does not need to be enabled.')
     return redirect(url_for('.moderate', page=page))
 
 @main.route('/moderate_disable/<int:id>')
