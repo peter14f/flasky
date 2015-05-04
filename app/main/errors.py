@@ -1,6 +1,7 @@
 from . import main
 from flask import render_template, jsonify, request
 
+@main.app_errorhandler(403)
 def forbidden(e):
     if request.accpet_mimetypes.accept_json and \
             not request.accept_mimetypes.accept_html:

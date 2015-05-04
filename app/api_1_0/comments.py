@@ -1,7 +1,7 @@
 from .authentication import auth
 from . import api
 from ..models import Comment, Post
-from flask import current_app, request, jsonify
+from flask import current_app, request, jsonify, url_for
 
 @api.route('/comments/')
 @auth.login_required
@@ -18,9 +18,15 @@ def get_comments():
     next = None
     prev = None
     if pagination.has_next:
-        next = pagination.next_num
+        next = url_for(
+            'api.get_comments', 
+            page=pagination.next_num, 
+            _external=True)
     if pagination.has_prev:
-        prev = pagination.prev_num
+        prev = url_for(
+            'api.get_comments', 
+            page=pagination.prev_num, 
+            _external=True)
     return jsonify({'comments': [comment.to_json() for comment in comments],
                     'prev': prev,
                     'next': next,
@@ -42,9 +48,17 @@ def get_post_comments(id):
     prev = None
     next = None
     if pagination.has_prev:
-        prev = url_for('', id=id, page=pagination.prev_num, _external=True)
+        prev = url_for(
+            'api.get_post_comments', 
+            id=id, 
+            page=pagination.prev_num, 
+            _external=True)
     if pagination.has_next:
-        next = pagination.next_num
+        next = url_for(
+            'api.get_post_comments', 
+            id=id, 
+            page=pagination.next_num, 
+            _external=True)
     return jsonify({'post_comments': [comment.to_json() for comment in post_comments],
                     'prev': prev,
                     'next': next,

@@ -7,7 +7,9 @@ from flask import current_app, request, jsonify, url_for
 @auth.login_required
 def get_user(id):
     user = User.query.get_or_404(id)
-    return jsonify({'user': user.to_json()})
+    return jsonify({
+        'user': user.to_json()
+    })
 
 @api.route('/users/<int:id>/posts/')
 @auth.login_required
@@ -30,10 +32,12 @@ def get_user_posts(id):
         next = url_for('api.get_user_posts', id=id, page=pagination.next_num, _external=True)
     if pagination.has_prev:
         prev = url_for('api.get_user_posts', id=id, page=pagination.prev_num, _external=True)
-    return jsonify({'user_posts': [post.to_json() for post in user_posts],
-                    'prev': prev,
-                    'next': next,
-                    'count': pagination.total})
+    return jsonify({
+        'user_posts': [post.to_json() for post in user_posts],
+        'prev': prev,
+        'next': next,
+        'count': pagination.total
+    })
 
 
 @api.route('/users/<int:id>/timeline/')
@@ -45,7 +49,7 @@ def get_user_followed_posts(id):
     return jsonify({'followed_posts': [post.jsonify() for post in posts]})
     """
     user = User.query.get_or_404(id)
-    page = request.args.get('page', 1, type=1)
+    page = request.args.get('page', 1, type=int)
     pagination = user.followed_posts.order_by(Post.timestamp.desc()).paginate(
             page=page, 
             per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
@@ -57,8 +61,10 @@ def get_user_followed_posts(id):
         next = url_for('api.get_user_followed_posts', id=id, page=pagination.next_num, _external=True)
     if pagination.has_prev:
         prev = url_for('api.get_user_followed_posts', id=id, page=pagination.prev_num, _external=True)
-    return jsonify({'followed_posts': [post.to_json() for post in followed_posts],
-                    'prev': prev,
-                    'next': next,
-                    'count': pagination.total})
+    return jsonify({
+        'followed_posts': [post.to_json() for post in followed_posts],
+        'prev': prev,
+        'next': next,
+        'count': pagination.total
+    })
 

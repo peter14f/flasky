@@ -280,19 +280,28 @@ class Post(db.Model):
     comments = db.relationship('Comment', backref='post', lazy='dynamic')
 
     @staticmethod
-    def generate_fake(count=100):
+    def generate_fake(count=100, testing=False):
         from random import seed, randint
+        from sqlalchemy.exc import IntegrityError
         import forgery_py
 
         seed()
         user_count = User.query.count()
         for i in range(count):
-            u = User.query.offset(randint(0, user_count - 1)).first()
+            if testing:
+                u = User.query.get(1)
+            else:
+                u = User.query.offset(randint(0, user_count - 1)).first()
+
             p = Post(body=forgery_py.forgery.lorem_ipsum.sentences(randint(1,3)),
                      timestamp=forgery_py.forgery.date.date(True),
                      author=u)
             db.session.add(p)
-            db.session.commit()
+            try:
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+
 
     @staticmethod
     def on_changed_body(target, value, oldvalue, initiator):
@@ -359,27 +368,35 @@ class Comment(db.Model):
         db.session.commit()
 
     @staticmethod
-    def generate_fake(count=100):
+    def generate_fake(count=100, testing=False):
         from random import seed, randint
         import forgery_py
+        from sqlalchemy.exc import IntegrityError
 
         seed()
         user_count = User.query.count()
         post_count = Post.query.count()
         users = User.query.all()
         for user in users:
-            posts = user.posts
+            posts = user.posts.order_by(Post.id.asc())
             if posts.count() > 0:
-                post = posts.offset(randint(0, posts.count() - 1)).first()
+                if testing:
+                    post = posts.first()
+                else:
+                    post = posts.offset(randint(0, posts.count() - 1)).first()
                 author = users[randint(0, len(users) - 1)]
-                comment = Comment(
-                            body=forgery_py.forgery.lorem_ipsum.sentences(randint(1,3)),
-                            timestamp=forgery_py.forgery.date.date(True),
-                            author=author,
-                            disabled=False,
-                            post=post)
-                db.session.add(comment)
-                db.session.commit()
+                for i in range(20):
+                    comment = Comment(
+                                body=forgery_py.forgery.lorem_ipsum.sentences(randint(1,3)),
+                                timestamp=forgery_py.forgery.date.date(True),
+                                author=author,
+                                disabled=False,
+                                post=post)
+                    db.session.add(comment)
+                try:
+                    db.session.commit()
+                except IntegrityError:
+                    db.session.rollback()
 
     def on_changed_body(target, value, oldvalue, initiator):
         allowed_tags = ['a', 'abbr', 'acronym', 'b', 'code', 'em', 'i', 'strong']

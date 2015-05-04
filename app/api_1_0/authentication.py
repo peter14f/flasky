@@ -2,10 +2,14 @@ from flask.ext.httpauth import HTTPBasicAuth
 from flask import g, jsonify
 from ..models import User, AnonymousUser, Permission
 from . import api
-from .errors import unauthorized
+from .errors import unauthorized, forbidden
 
 auth = HTTPBasicAuth()
 
+""" The verification vallback returns True when the
+login is valid or False otherwise. Anonymous logins
+are supported, for which the client must send a 
+blank email field. """
 @auth.verify_password
 def verify_password(email_or_token, password):
     if email_or_token == '':
@@ -29,7 +33,7 @@ def auth_error():
 @api.before_request
 @auth.login_required
 def before_request():
-    if not g.current_user.is_anonymous and \
+    if not g.current_user.is_anonymous() and \
             not g.current_user.confirmed:
         return forbidden('Unconfirmed account')
 

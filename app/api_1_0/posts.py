@@ -2,20 +2,21 @@ from flask import jsonify, g, current_app, request, url_for
 from .decorators import permission_required
 from ..models import Permission, Post
 from . import api
-from .authentication import auth
+from .errors import forbidden
 from app import db
 
+
 @api.route('/posts/')
-@auth.login_required
 def get_posts():
     """
     posts = Post.query.all()
     return jsonify({ 'posts': [post.to_json() for post in posts]})
     """
     page = request.args.get('page', 1, type=int)
-    pagination = Post.query.paginate(page,
-                                   per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
-                                   error_out=False)
+    pagination = Post.query.paginate(
+        page,
+        per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+        error_out=False)
     posts = pagination.items
     prev = None
     next = None
@@ -23,16 +24,17 @@ def get_posts():
         next = url_for('api.get_posts', page=pagination.next_num, _external=True)
     if pagination.has_prev:
         prev = url_for('api.get_posts', page=pagination.prev_num, _external=True)
-    return jsonify({"posts": [post.to_json() for post in posts],
-                    "prev": prev,
-                    "next": next,
-                    "count": pagination.total})
+    return jsonify({
+        "posts": [post.to_json() for post in posts],
+        "prev": prev,
+        "next": next,
+        "count": pagination.total
+    })
 
 @api.route('/posts/<int:id>')
-@auth.login_required
 def get_post(id):
     post = Post.query.get_or_404(id)
-    return jsonify({'post': post.to_json()})
+    return jsonify(post.to_json())
 
 @api.route('/posts/', methods=['POST'])
 @permission_required(Permission.WRITE_ARTICLES)
