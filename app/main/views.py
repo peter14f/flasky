@@ -9,6 +9,16 @@ from ..models import Permission, Follow, Comment
 from ..decorators import permission_required, admin_required
 from flask.ext.login import login_required, current_user
 
+@main.route('/shutdown')
+def server_shutdown():
+    if not current_app.testing:
+        abort(404)
+    shutdown = request.environ.get('werkzeug.server.shutdown')
+    if not shutdown:
+        abort(500)
+    shutdown()
+    return 'Shutting down...'
+
 @main.route('/old_index', methods=['GET', 'POST'])
 def old_index():
     form = NameForm()
