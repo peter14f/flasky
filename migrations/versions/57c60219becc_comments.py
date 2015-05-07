@@ -19,7 +19,7 @@ def upgrade():
     op.create_table('comments',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('body', sa.Text(), nullable=True),
-    sa.Column('bobdy_html', sa.Text(), nullable=True),
+    sa.Column('body_html', sa.Text(), nullable=True),
     sa.Column('timestamp', sa.DateTime(), nullable=True),
     sa.Column('disabled', sa.Boolean(), nullable=True),
     sa.Column('author_id', sa.Integer(), nullable=True),

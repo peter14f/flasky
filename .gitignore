@@ -4,3 +4,4 @@ venv
 *.swp
 *.sqlite
 tmp/
+.env
