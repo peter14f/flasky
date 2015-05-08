@@ -4,24 +4,29 @@ from wtforms.validators import Required, Email, Length, EqualTo, Regexp
 from ..models import User
 
 class LoginForm(Form):
-    email = StringField('Email', validators=[Required(), Length(1, 64), Email()])
+    email = StringField(
+      'Email',
+      validators=[Required(), Length(1, 64), Email()])
     password = PasswordField('Password', validators=[Required()])
     remember_me = BooleanField('Keep me logged in')
     submit = SubmitField('Log In')
 
 class RegistrationForm(Form):
-    email = StringField('Email', 
-                        validators=[Required(), 
-                                    Length(1, 64), 
-                                    Email()])
-    username = StringField('Username', 
-                           validators=[Required(), 
-                                       Length(1, 64), 
-                                       Regexp('^[A-Za-z][A-Za-z0-9_.]*$', 0, 
-                                              'Usernames must have only letters, '
-                                              'numbers, dots or underscores')])
-    password = PasswordField('Password', 
-                             validators=[Required(), 
+    email = StringField(
+              'Email',
+              validators=[Required(),
+                          Length(1, 64),
+                          Email()])
+    username = StringField(
+                  'Username',
+                  validators=[Required(),
+                              Length(1, 64),
+                              Regexp('^[A-Za-z][A-Za-z0-9_.]*$', 0,
+                                     'Usernames must have only letters, '
+                                     'numbers, dots or underscores')])
+    password = PasswordField(
+                             'Password',
+                             validators=[Required(),
                                          EqualTo('password2', message='Passwords must match.')])
     password2 = PasswordField('Confirm password', validators=[Required()])
     submit = SubmitField('Register')
@@ -39,27 +44,30 @@ class ChangePasswordForm(Form):
                                  validators=[Required()])
     new_password = PasswordField('New Password',
                                  validators=[Required(), EqualTo('new_password2', message='Passwords must match.')])
-    new_password2 = PasswordField('Confirm New Password', 
+    new_password2 = PasswordField('Confirm New Password',
                                   validators=[Required()])
     submit = SubmitField('Change Password')
 
 class ForgotPasswordForm(Form):
-  email = StringField('Email',
-                      validators=[Required(), Length(1, 64), Email()])
-  submit = SubmitField('Done')
+    email = StringField(
+      'Email',
+      validators=[Required(), Length(1, 64), Email()])
+    submit = SubmitField('Done')
 
 class PasswordResetForm(Form):
-  email = StringField('Email',
+    email = StringField('Email',
                       validators=[Required(),
-                                  Length(1, 64), 
+                                  Length(1, 64),
                                   Email()])
-  password = PasswordField('Password',
-                           validators=[Required(), EqualTo('password2', message='Passwordsmust must match.')])
-  password2 = PasswordField('Confirm Password',
+    password = PasswordField('Password',
+                           validators=[Required(), EqualTo('password2', message='Passwords must match.')])
+    password2 = PasswordField('Confirm Password',
                             validators=[Required()])
-  submit = SubmitField('Done')
+    submit = SubmitField('Done')
 
 class ChangeEmailRequestForm(Form):
-  newemail = StringField('New Email', validators=[Required(), Length(1, 64), Email()])
-  password = PasswordField('Password', validators=[Required()])
-  submit = SubmitField('Submit')
+    newemail = StringField(
+      'New Email',
+      validators=[Required(), Length(1, 64), Email()])
+    password = PasswordField('Password', validators=[Required()])
+    submit = SubmitField('Submit')
