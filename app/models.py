@@ -326,7 +326,7 @@ class Post(db.Model):
             'body': self.body,
             'body_html': self.body_html,
             'timestamp': self.timestamp,
-            'author': url_for('api.get_user', 
+            'author': url_for('api.get_user',
                               id=self.author_id,
                               _external=True),
             'comments': url_for('api.get_post_comments',
@@ -410,8 +410,8 @@ class Comment(db.Model):
         return {'body': self.body,
                 'body_html': self.body_html,
                 'timestamp': self.timestamp,
-                'author' : url_for('api.get_user', 
-                                   id=self.author_id, 
+                'author' : url_for('api.get_user',
+                                   id=self.author_id,
                                    _external=True),
 
                 }

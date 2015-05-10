@@ -119,7 +119,7 @@ def password_reset(token):
             flash('Link to reset password has expired. Please try requesting another link to reset your password again!')
             return redirect(url_for('auth.password_reset_request'))
 
-        flash('Password for username ' + "'" + 
+        flash('Password for username ' + "'" +
               u.username + "'" + " has been reset.")
         return redirect(url_for('main.index'))
     return render_template('auth/reset_password.html', form=form)
@@ -135,10 +135,10 @@ def change_email_request():
         if not User.query.filter_by(email=form.newemail.data).first() is None:
             flash("You may not use this email because it's already registered with Flasky")
             return redirect(url_for('auth.change_email_request'))
-        
+
         token = current_user.generate_email_change_token(form.newemail.data)
         send_mail(form.newemail.data, 'Change Email Registered with Flask',
-                  'auth/email/change_email', 
+                  'auth/email/change_email',
                   email=form.newemail.data, token=token)
         flash('A link to reset your email registered with Flasky has been mailed to ' + "'" + form.newemail.data + "'")
         return redirect(url_for('main.index'))

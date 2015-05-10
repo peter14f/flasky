@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import os
+import errno
+import socket
 
 COV = None
 if os.environ.get('FLASK_COVERAGE'):
@@ -68,6 +70,26 @@ def deploy():
     # create self-follows for all users
     User.add_self_follows()
 
+@app.teardown_request
+def commit_on_request_success(exception):
+    """ We need to commit at the end of every request if successful.
+        Flask-SQLAlchemy deprecated this behavior so we add our own handler for
+        it, which also lets us customize handling of exceptions.
+
+        Because of how Gunicorn's master/worker model works it sometimes ends
+        up with socket errors on the exception stack that flask will pass into
+        this function, but they are not really errors.
+        See https://github.com/mitsuhiko/flask/issues/984 for details.
+    """
+    def _is_gunicorn_ignored_err(exc):
+        if type(exc) == socket.error and \
+                exc.errno in (errno.EAGAIN, errno.ECONNABORTED):
+            return True
+    if not exception or _is_gunicorn_ignored_err(exception):
+        db.session.commit()
+    else:
+        app.logger.error(
+            "No SQL commit due to exception: {0}".format(exception))
 
 if __name__ == '__main__':
     manager.run()

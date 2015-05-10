@@ -3,8 +3,11 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config(object):
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'hard to guess string'
-    # enable automatic commits of database changes
-    SQLALCHEMY_COMMIT_ON_TEARDOWN = True
+    # enable automatic commits of database changes at the end of each request
+    #SQLALCHEMY_COMMIT_ON_TEARDOWN = True
+    """ SQLALCHEMY_COMMIT_ON_TEARDOWN is deprecated """
+
+    #SQLALCHEMY_ECHO = True
     FLASKY_MAIL_SUBJECT_PREFIX = '[Flasky]'
     FLASKY_ADMIN = os.environ.get('FLASKY_ADMIN')
     FLASKY_MAIL_SENDER = 'Flasky Admin <flasky@example.com>'
@@ -80,8 +83,6 @@ class HerokuConfig(ProductionConfig):
         file_handler = StreamHandler()
         file_handler.setLevel(logging.WARNING)
         app.logger.addHandler(file_handler)
-
-
 
 config = {
     'development': DevelopmentConfig,
